@@ -22,10 +22,18 @@ let db, client;
 
 async function connectDB() {
   try {
-    client = new MongoClient(MONGODB_URI);
+    // Connect with SSL/TLS and proper options
+    client = new MongoClient(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      tls: true, // ensure TLS
+      tlsAllowInvalidCertificates: false, // should be false for Atlas
+    });
+
     await client.connect();
     db = client.db(DB_NAME);
-    console.log("Connected to MongoDB successfully");
+
+    console.log("✅ Connected to MongoDB successfully");
 
     // Create indexes
     await db.collection("users").createIndex({ email: 1 }, { unique: true });
@@ -35,8 +43,10 @@ async function connectDB() {
     await db
       .collection("leaderboard")
       .createIndex({ month: 1, year: 1 }, { unique: true });
+
+    return db;
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    console.error("❌ MongoDB connection error:", error);
     process.exit(1);
   }
 }
